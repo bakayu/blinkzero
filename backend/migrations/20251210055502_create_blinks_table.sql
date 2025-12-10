@@ -1,6 +1,7 @@
 -- Create blinks table
+CREATE TYPE blink_type AS ENUM ('donation', 'payment', 'vote');
 
-CREATE TABLE IF NOT EXISTS blinks (
+CREATE TABLE blinks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMPTZ DEFAULT now(),
     title TEXT NOT NULL,
@@ -8,7 +9,11 @@ CREATE TABLE IF NOT EXISTS blinks (
     description TEXT NOT NULL,
     label TEXT NOT NULL,
     wallet_address TEXT NOT NULL,
-    amount_sol FLOAT8 DEFAULT 0.1
+    
+    type blink_type NOT NULL DEFAULT 'donation',
+    config JSONB NOT NULL DEFAULT '{}'::jsonb
 );
 
 ALTER TABLE blinks ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow all" ON blinks FOR ALL USING (true);
