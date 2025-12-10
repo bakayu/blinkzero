@@ -4,6 +4,8 @@ use blinkzero::telemetry::{get_subscriber, init_subscriber};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    dotenvy::dotenv().ok();
+
     let subscriber = get_subscriber("blinkzero".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
 

@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/* Solana Gradient Animated Background - Darker */
+.solana-gradient-bg {
+  background: linear-gradient(-45deg,
+      #000000,
+      #0a0415,
+      #0f0620,
+      #080f18,
+      #050b14,
+      #0a0415,
+      #120520,
+      #000000);
+  background-size: 400% 400%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Floating orbs - more subtle */
+.solana-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.25;
+  animation: float 20s ease-in-out infinite;
+}
+
+.solana-orb-purple {
+  background: radial-gradient(circle, #7c35d9 0%, transparent 70%);
+}
+
+.solana-orb-teal {
+  background: radial-gradient(circle, #0fc07a 0%, transparent 70%);
+}
+
+.solana-orb-blue {
+  background: radial-gradient(circle, #00a8cc 0%, transparent 70%);
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(10%, 10%) scale(1.1);
+  }
+
+  50% {
+    transform: translate(-5%, 20%) scale(0.9);
+  }
+
+  75% {
+    transform: translate(-10%, -10%) scale(1.05);
+  }
+}
