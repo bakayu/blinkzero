@@ -1,5 +1,5 @@
 use crate::configuration::{DatabaseSettings, Settings};
-use crate::handlers::{create_blink, get_action_metadata, health};
+use crate::handlers::{create_blink, get_action_metadata, health, post_action_transaction};
 use axum::{
     Router,
     http::{Method, header},
@@ -59,6 +59,7 @@ async fn run(
         .route("/health", get(health))
         .route("/api/blinks", post(create_blink))
         .route("/api/actions/{id}", get(get_action_metadata))
+        .route("/api/actions/{id}", post(post_action_transaction))
         .layer(cors)
         .with_state(db_pool);
 

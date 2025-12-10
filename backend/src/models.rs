@@ -55,3 +55,14 @@ pub struct ActionLink {
     pub label: String,
     pub href: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct ActionPostRequest {
+    pub account: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ActionPostResponse {
+    pub transaction: String,
+    pub message: Option<String>,
+}
