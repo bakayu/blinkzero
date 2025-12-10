@@ -1,0 +1,10 @@
+# base.yaml
+
+database:
+  username: "postgres"
+  password: "password"
+  host: "localhost"
+  port: 5432
+  database_name: "blinkzero"
+application:
+  port: 3000
