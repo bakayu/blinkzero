@@ -62,7 +62,7 @@ async fn run(
         .route("/health", get(health))
         .route("/api/blinks", post(create_blink))
         .route(
-            "/blinks/{id}",
+            "/api/actions/{id}",
             get(get_action_metadata).post(post_action_transaction),
         )
         .layer(cors)

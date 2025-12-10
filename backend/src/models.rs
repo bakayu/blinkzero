@@ -1,7 +1,17 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::prelude::FromRow;
+use sqlx::types::Json;
 use uuid::Uuid;
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(type_name = "blink_type", rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
+pub enum BlinkType {
+    Donation,
+    Payment,
+    Vote,
+}
 
 #[derive(Debug, FromRow, Serialize)]
 pub struct Blink {
@@ -12,7 +22,8 @@ pub struct Blink {
     pub description: String,
     pub label: String,
     pub wallet_address: String,
-    pub amount_sol: f64,
+    pub r#type: BlinkType,
+    pub config: Json<serde_json::Value>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -22,12 +33,8 @@ pub struct CreateBlinkRequest {
     pub description: String,
     pub label: String,
     pub wallet_address: String,
-    #[serde(default = "default_amount")]
-    pub amount_sol: f64,
-}
-
-fn default_amount() -> f64 {
-    0.1
+    pub r#type: BlinkType,
+    pub config: serde_json::Value,
 }
 
 #[derive(Debug, Serialize)]
@@ -42,23 +49,40 @@ pub struct ActionMetadata {
     pub label: String,
     pub title: String,
     pub description: String,
-    pub links: ActionLinks,
+    pub links: Option<ActionLinks>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub disabled: Option<bool>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ActionLinks {
-    pub actions: Vec<ActionLink>,
+    pub actions: Vec<LinkedAction>,
 }
 
 #[derive(Debug, Serialize)]
-pub struct ActionLink {
+pub struct LinkedAction {
     pub label: String,
     pub href: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parameters: Option<Vec<ActionParameter>>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ActionParameter {
+    pub name: String,
+    pub label: Option<String>,
+    pub required: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ActionPostRequest {
     pub account: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ActionQueryParams {
+    pub amount: Option<String>,
+    pub selection: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
