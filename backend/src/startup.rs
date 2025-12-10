@@ -52,19 +52,23 @@ async fn run(
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
-        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION])
-        .expose_headers([header::HeaderName::from_static("x-action-version")]);
+        .allow_headers(Any)
+        .expose_headers([
+            header::HeaderName::from_static("x-action-version"),
+            header::HeaderName::from_static("x-blockchain-ids"),
+        ]);
 
     let app = Router::new()
         .route("/health", get(health))
         .route("/api/blinks", post(create_blink))
-        .route("/api/actions/{id}", get(get_action_metadata))
-        .route("/api/actions/{id}", post(post_action_transaction))
+        .route(
+            "/blinks/{id}",
+            get(get_action_metadata).post(post_action_transaction),
+        )
         .layer(cors)
         .with_state(db_pool);
 
-    let server = axum::serve(tokio_listener, app);
-    let handle = tokio::spawn(async move { server.await });
+    let handle = tokio::spawn(async move { axum::serve(tokio_listener, app).await });
 
     Ok(handle)
 }

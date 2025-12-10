@@ -37,6 +37,6 @@ pub async fn create_blink(
 
     Ok(Json(CreateBlinkResponse {
         id: blink.id,
-        action_url: format!("{}/api/actions/{}", backend_url, blink.id),
+        action_url: format!("{}/blinks/{}", backend_url, blink.id),
     }))
 }

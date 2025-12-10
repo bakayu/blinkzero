@@ -5,8 +5,11 @@ use axum::{
 };
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use solana_client::nonblocking::rpc_client::RpcClient;
+use std::time::Duration;
+
 use solana_sdk::{
-    native_token::LAMPORTS_PER_SOL, pubkey::Pubkey, system_instruction, transaction::Transaction,
+    message::Message, native_token::LAMPORTS_PER_SOL, pubkey::Pubkey, system_instruction,
+    transaction::Transaction,
 };
 use sqlx::PgPool;
 use std::str::FromStr;
@@ -28,12 +31,7 @@ pub async fn get_action_metadata(
     let backend_url =
         std::env::var("BACKEND_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
 
-    let blink: Blink = sqlx::query_as("SELECT * FROM blinks WHERE id = $1")
-        .bind(id)
-        .fetch_optional(&pool)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .ok_or((StatusCode::NOT_FOUND, "Blink not found".to_string()))?;
+    let blink = fetch_blink(&pool, id).await?;
 
     Ok(Json(ActionMetadata {
         icon: blink.icon_url,
@@ -43,7 +41,7 @@ pub async fn get_action_metadata(
         links: ActionLinks {
             actions: vec![ActionLink {
                 label: blink.label,
-                href: format!("{}/api/actions/{}", backend_url, id),
+                href: format!("{}/blinks/{}", backend_url, id),
             }],
         },
     }))
@@ -66,10 +64,15 @@ pub async fn post_action_transaction(
     let transaction =
         build_transfer_transaction(&user_pubkey, &destination_pubkey, blink.amount_sol).await?;
 
-    let encoded = serialize_transaction(&transaction)?;
+    let serialized = bincode::serialize(&transaction).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Serialization error: {}", e),
+        )
+    })?;
 
     Ok(Json(ActionPostResponse {
-        transaction: encoded,
+        transaction: BASE64.encode(&serialized),
         message: Some(format!("Send {} SOL to {}", blink.amount_sol, blink.title)),
     }))
 }
@@ -88,7 +91,6 @@ fn parse_pubkey(address: &str, name: &str) -> Result<Pubkey, (StatusCode, String
         .map_err(|e| (StatusCode::BAD_REQUEST, format!("Invalid {}: {}", name, e)))
 }
 
-#[allow(deprecated)]
 async fn build_transfer_transaction(
     from: &Pubkey,
     to: &Pubkey,
@@ -101,31 +103,25 @@ async fn build_transfer_transaction(
         )
     })?;
 
-    let client = RpcClient::new(rpc_url);
+    tracing::info!("Connecting to RPC: {}", rpc_url);
+    let client = RpcClient::new_with_timeout(rpc_url, Duration::from_secs(30));
 
+    tracing::info!("Fetching latest blockhash...");
     let recent_blockhash = client.get_latest_blockhash().await.map_err(|e| {
+        tracing::error!("RPC error: {}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("RPC error: {}", e),
         )
     })?;
+    tracing::info!("Got blockhash: {}", recent_blockhash);
 
     let lamports = (amount_sol * LAMPORTS_PER_SOL as f64) as u64;
     let instruction = system_instruction::transfer(from, to, lamports);
 
-    let mut transaction = Transaction::new_with_payer(&[instruction], Some(from));
-    transaction.message.recent_blockhash = recent_blockhash;
+    let message = Message::new_with_blockhash(&[instruction], Some(from), &recent_blockhash);
+
+    let transaction = Transaction::new_unsigned(message);
 
     Ok(transaction)
-}
-
-fn serialize_transaction(transaction: &Transaction) -> Result<String, (StatusCode, String)> {
-    let serialized = bincode::serialize(transaction).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Serialization error: {}", e),
-        )
-    })?;
-
-    Ok(BASE64.encode(&serialized))
 }
