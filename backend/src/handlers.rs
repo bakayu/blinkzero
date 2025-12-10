@@ -28,7 +28,7 @@ pub async fn create_blink(
     Json(payload): Json<CreateBlinkRequest>,
 ) -> Result<Json<CreateBlinkResponse>, (StatusCode, String)> {
     let backend_url =
-        std::env::var("BACKEND_URL").unwrap_or_else(|_| "http://localhost:3001".to_string());
+        std::env::var("BACKEND_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
 
     let blink: Blink = sqlx::query_as(
         r#"
@@ -65,7 +65,7 @@ pub async fn get_action_metadata(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ActionMetadata>, (StatusCode, String)> {
     let backend_url =
-        std::env::var("BACKEND_URL").unwrap_or_else(|_| "http://localhost:3001".to_string());
+        std::env::var("BACKEND_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
 
     let blink: Blink = sqlx::query_as("SELECT * FROM blinks WHERE id = $1")
         .bind(id)
