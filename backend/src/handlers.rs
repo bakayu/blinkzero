@@ -10,10 +10,19 @@ use crate::models::{
     ActionLink, ActionLinks, ActionMetadata, Blink, CreateBlinkRequest, CreateBlinkResponse,
 };
 
-pub async fn health() -> &'static str {
-    "OK"
+#[tracing::instrument(name = "Health Check")]
+pub async fn health() -> StatusCode {
+    StatusCode::OK
 }
 
+#[tracing::instrument(
+    name = "Creating a new blink",
+    skip(pool),
+    fields(
+        blink_title = %payload.title,
+        wallet = %payload.wallet_address
+    )
+)]
 pub async fn create_blink(
     State(pool): State<PgPool>,
     Json(payload): Json<CreateBlinkRequest>,
@@ -44,6 +53,13 @@ pub async fn create_blink(
     }))
 }
 
+#[tracing::instrument(
+    name = "Fetching action metadata",
+    skip(pool),
+    fields(
+        blink_id = %id
+    )
+)]
 pub async fn get_action_metadata(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
