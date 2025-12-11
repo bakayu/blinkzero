@@ -6,6 +6,9 @@
 
 A visual environment for designing, configuring, and deploying Solana Actions (Blinks) without writing code.
 
+> [!WARNING]
+> Currently the platform is running on devnet.
+
 ## Motivation
 
 Creating Solana Actions currently requires manual coding, which limits adoption; This project aims to remove this barrier by enabling the visual construction and deployment of Blinks without engineering dependencies.
