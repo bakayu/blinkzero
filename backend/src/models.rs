@@ -90,3 +90,14 @@ pub struct ActionPostResponse {
     pub transaction: String,
     pub message: Option<String>,
 }
+
+#[derive(Debug, Serialize)]
+pub struct ActionsJson {
+    pub rules: Vec<ActionRule>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ActionRule {
+    pub path_pattern: String,
+    pub api_path: String,
+}

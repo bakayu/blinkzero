@@ -1,5 +1,5 @@
 use blinkzero::configuration::{DatabaseSettings, get_configuration};
-use blinkzero::startup::get_connection_pool;
+use blinkzero::startup::run;
 use blinkzero::telemetry::{get_subscriber, init_subscriber};
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
@@ -34,15 +34,16 @@ pub async fn spawn_app() -> TestApp {
     let mut configuration = get_configuration().expect("Failed to read configuration");
     configuration.database.database_name = Uuid::new_v4().to_string();
 
-    configure_database(&configuration.database).await;
+    let connection_pool = configure_database(&configuration.database).await;
 
-    let connection_pool = get_connection_pool(&configuration.database);
-
-    let server = blinkzero::startup::run(listener, connection_pool.clone())
+    // Disable rate limiting for tests
+    let server = run(listener, connection_pool.clone(), false)
         .await
         .expect("Failed to bind address");
 
-    tokio::spawn(server);
+    tokio::spawn(async move {
+        server.await.unwrap().unwrap();
+    });
 
     TestApp {
         address,

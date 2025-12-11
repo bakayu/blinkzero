@@ -1,5 +1,7 @@
 use crate::configuration::{DatabaseSettings, Settings};
-use crate::handlers::{create_blink, get_action_metadata, health, post_action_transaction};
+use crate::handlers::{
+    create_blink, get_action_json, get_action_metadata, health, post_action_transaction,
+};
 use axum::{
     Router,
     http::{Method, header},
@@ -11,7 +13,7 @@ use std::net::TcpListener;
 use std::sync::Arc;
 use tokio::task::JoinHandle;
 use tower_governor::{
-    GovernorLayer, governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor,
+    GovernorLayer, governor::GovernorConfigBuilder, key_extractor::PeerIpKeyExtractor,
 };
 use tower_http::cors::{Any, CorsLayer};
 
@@ -27,10 +29,9 @@ impl Application {
             "{}:{}",
             configuration.application.host, configuration.application.port
         );
-
         let listener = TcpListener::bind(&address)?;
 
-        let server_task = run(listener, connection_pool).await?;
+        let server_task = run(listener, connection_pool, false).await?;
 
         tracing::info!("Server running at : {}", address);
 
@@ -38,7 +39,7 @@ impl Application {
     }
 
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
-        self.server_task.await.unwrap()
+        self.server_task.await?
     }
 }
 
@@ -49,6 +50,7 @@ pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
 pub async fn run(
     listener: TcpListener,
     db_pool: PgPool,
+    enable_rate_limiting: bool,
 ) -> Result<JoinHandle<Result<(), std::io::Error>>, std::io::Error> {
     listener.set_nonblocking(true)?;
     let tokio_listener = tokio::net::TcpListener::from_std(listener)?;
@@ -62,35 +64,45 @@ pub async fn run(
             header::HeaderName::from_static("x-blockchain-ids"),
         ]);
 
-    let governor_conf = Arc::new(
-        GovernorConfigBuilder::default()
-            .per_second(60)
-            .burst_size(5)
-            .key_extractor(SmartIpKeyExtractor)
-            .finish()
-            .unwrap(),
-    );
+    let app = if enable_rate_limiting {
+        let governor_conf = Arc::new(
+            GovernorConfigBuilder::default()
+                .per_second(60)
+                .burst_size(5)
+                .key_extractor(PeerIpKeyExtractor)
+                .finish()
+                .unwrap(),
+        );
 
-    let app = Router::new()
-        .route("/health", get(health))
-        .route(
-            "/api/blinks",
-            post(create_blink).layer(GovernorLayer::new(governor_conf)),
-        )
-        .route(
-            "/api/actions/{id}",
-            get(get_action_metadata).post(post_action_transaction),
-        )
-        .layer(cors)
-        .with_state(db_pool);
+        Router::new()
+            .route("/health", get(health))
+            .route("/.well-known/actions.json", get(get_action_json))
+            .route("/actions.json", get(get_action_json))
+            .route(
+                "/api/blinks",
+                post(create_blink).layer(GovernorLayer::new(governor_conf)),
+            )
+            .route(
+                "/api/actions/{id}",
+                get(get_action_metadata).post(post_action_transaction),
+            )
+            .layer(cors)
+            .with_state(db_pool)
+    } else {
+        Router::new()
+            .route("/health", get(health))
+            .route("/.well-known/actions.json", get(get_action_json))
+            .route("/actions.json", get(get_action_json))
+            .route("/api/blinks", post(create_blink))
+            .route(
+                "/api/actions/{id}",
+                get(get_action_metadata).post(post_action_transaction),
+            )
+            .layer(cors)
+            .with_state(db_pool)
+    };
 
-    let handle = tokio::spawn(async move {
-        axum::serve(
-            tokio_listener,
-            app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
-        )
-        .await
-    });
+    let handle = tokio::spawn(async move { axum::serve(tokio_listener, app).await });
 
     Ok(handle)
 }
