@@ -1,7 +1,6 @@
+use crate::models::{Blink, BlinkType, CreateBlinkRequest, CreateBlinkResponse};
 use axum::{Json, extract::State, http::StatusCode};
 use sqlx::PgPool;
-
-use crate::models::{Blink, CreateBlinkRequest, CreateBlinkResponse};
 
 #[tracing::instrument(
     name = "Creating a new blink",
@@ -18,20 +17,30 @@ pub async fn create_blink(
     let backend_url =
         std::env::var("BACKEND_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
 
-    let blink: Blink = sqlx::query_as(
+    let blink = sqlx::query_as!(
+        Blink,
         r#"
         INSERT INTO blinks (title, icon_url, description, label, wallet_address, type, config)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING *
+        RETURNING 
+            id, 
+            created_at as "created_at!",
+            title, 
+            icon_url, 
+            description, 
+            label, 
+            wallet_address, 
+            type as "type: BlinkType", 
+            config
         "#,
+        payload.title,
+        payload.icon_url,
+        payload.description,
+        payload.label,
+        payload.wallet_address,
+        payload.r#type as BlinkType,
+        payload.config
     )
-    .bind(&payload.title)
-    .bind(&payload.icon_url)
-    .bind(&payload.description)
-    .bind(&payload.label)
-    .bind(&payload.wallet_address)
-    .bind(&payload.r#type)
-    .bind(&payload.config)
     .fetch_one(&pool)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
