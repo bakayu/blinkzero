@@ -22,12 +22,115 @@ Unlike generic boilerplate templates, this architecture:
 > [!Note]
 > Planned Feature: Hot-Swappable Configuration - Stores Blink definitions as structured data, allowing users to update metadata (labels, icons, descriptions) instantly without redeploying the underlying infrastructure.
 
+<details>
+<summary>Screen Shots</summary>
+
+![ss_1](./docs/images/ss_1.png)
+
+![ss_2](./docs/images/ss_2.png)
+
+![ss_3](./docs/images/ss_3.png)
+
+![ss_4](./docs/images/ss_4.png)
+
+</details>
+
 ## Stack
 
 * **Frontend (Builder):** Next.js, React, TypeScript
 * **Backend (API & TX Engine):** Rust (Axum/Tokio), Solana SDK
 * **Database:** PostgreSQL
 * **Infrastructure:** Vercel (Frontend), Docker (Backend)
+
+## API Reference
+
+The backend exposes a REST API compliant with the Solana Actions specification.
+
+### 1. Create Blink
+
+Registers a new Blink configuration in the database.
+
+* **Endpoint:** `POST /api/blinks`
+* **Content-Type:** `application/json`
+* **Body:**
+  
+    ```json
+    {
+    "title": "title",
+    "icon_url": "https://example.com/image.png",
+    "description": "description",
+    "label": "Donate",
+    "wallet_address": "abC2...",
+    "type": "donation", 
+    "config": {
+        "amount": 0.5
+     }
+    }
+    ```
+
+    Supported types: `donation`, `payment`, `vote`
+
+    Response:
+
+    ```json
+    {
+      "id": "{id}",
+      "action_url": "https://your-api.com/api/actions/{id}"
+    }
+    ```
+
+### 2. Get Action Metadata (GET)
+
+Returns the Action metadata required by the Solana Actions specification (dialects).
+
+  Endpoint: `GET /api/actions/{id}`
+
+  Response:
+
+  ```json
+  {
+    "icon": "https://example.com/image.png",
+    "label": "Donate",
+    "title": "title",
+    "description": "description",
+    "links": {
+      "actions": [
+        {
+          "label": "Donate",
+          "href": "/api/actions/{id}?amount=0.5"
+        }
+      ]
+    }
+  }
+  ```
+
+### 3. Build Transaction (POST)
+
+Constructs the unsigned transaction payload for the user to sign.
+
+  Endpoint: `POST /api/actions/{id}`
+
+  Query Parameters:
+
+* amount (optional): Amount of SOL to transfer.
+* selection (optional): Vote option selected.
+
+  Body:
+
+  ```json
+  {
+    "account": "UserWalletAddress..."
+  }
+  ```
+
+  Response:
+
+  ```json
+  {
+    "transaction": "base64_encoded_transaction_string...",
+    "message": "Send 0.5 SOL"
+  }
+   ```
 
 ## Local Development
 
