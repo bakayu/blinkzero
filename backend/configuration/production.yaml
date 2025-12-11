@@ -1,4 +1,7 @@
 # production.yaml
 
+database:
+  require_ssl: true
+
 application:
   host: "0.0.0.0"

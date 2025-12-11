@@ -1,4 +1,7 @@
 # local.yaml
 
+database:
+  require_ssl: false
+
 application:
   host: "127.0.0.1"
