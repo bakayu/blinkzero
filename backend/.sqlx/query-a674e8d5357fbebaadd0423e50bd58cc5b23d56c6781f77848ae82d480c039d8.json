@@ -1,0 +1,98 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO blinks (title, icon_url, description, label, wallet_address, type, config)\n        VALUES ($1, $2, $3, $4, $5, $6, $7)\n        RETURNING \n            id, \n            created_at as \"created_at!\",\n            title, \n            icon_url, \n            description, \n            label, \n            wallet_address, \n            type as \"type: BlinkType\", \n            config\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at!",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 2,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "icon_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "label",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "wallet_address",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "type: BlinkType",
+        "type_info": {
+          "Custom": {
+            "name": "blink_type",
+            "kind": {
+              "Enum": [
+                "donation",
+                "payment",
+                "vote"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "config",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "blink_type",
+            "kind": {
+              "Enum": [
+                "donation",
+                "payment",
+                "vote"
+              ]
+            }
+          }
+        },
+        "Jsonb"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "a674e8d5357fbebaadd0423e50bd58cc5b23d56c6781f77848ae82d480c039d8"
+}

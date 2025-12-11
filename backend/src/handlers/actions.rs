@@ -182,12 +182,30 @@ fn get_rpc_client() -> Result<RpcClient, (StatusCode, String)> {
 }
 
 async fn fetch_blink(pool: &PgPool, id: Uuid) -> Result<Blink, (StatusCode, String)> {
-    sqlx::query_as("SELECT * FROM blinks WHERE id = $1")
-        .bind(id)
-        .fetch_optional(pool)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .ok_or((StatusCode::NOT_FOUND, "Blink not found".to_string()))
+    {
+        sqlx::sqlx_macros::expand_query!(
+            record = Blink,
+            source = r#"
+        SELECT 
+            id, 
+            created_at as "created_at!",
+            title, 
+            icon_url, 
+            description, 
+            label, 
+            wallet_address, 
+            type as "type: BlinkType", 
+            config 
+        FROM blinks 
+        WHERE id = $1
+        "#,
+            args = [id]
+        )
+    }
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+    .ok_or((StatusCode::NOT_FOUND, "Blink not found".to_string()))
 }
 
 fn parse_pubkey(address: &str, name: &str) -> Result<Pubkey, (StatusCode, String)> {

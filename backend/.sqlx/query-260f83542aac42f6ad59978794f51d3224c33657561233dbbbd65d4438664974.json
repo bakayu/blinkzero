@@ -1,0 +1,81 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            id, \n            created_at as \"created_at!\",\n            title, \n            icon_url, \n            description, \n            label, \n            wallet_address, \n            type as \"type: BlinkType\", \n            config \n        FROM blinks \n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at!",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 2,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "icon_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "label",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "wallet_address",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "type: BlinkType",
+        "type_info": {
+          "Custom": {
+            "name": "blink_type",
+            "kind": {
+              "Enum": [
+                "donation",
+                "payment",
+                "vote"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "config",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "260f83542aac42f6ad59978794f51d3224c33657561233dbbbd65d4438664974"
+}
