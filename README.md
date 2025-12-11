@@ -1,6 +1,6 @@
 # blinkzero
 
-![CI Status](https://github.com/bakayu/blinkzero/actions/workflows/CI.yml/badge.svg) ![Rust Version](https://img.shields.io/badge/rust-1.75%2B-000000.svg?style=flat&logo=rust) ![Powered by Solana](https://img.shields.io/badge/powered_by-solana-000000.svg?style=flat&logo=solana) ![Release Version](https://img.shields.io/github/v/release/bakayu/blinkzero?style=flat&color=000000) ![License](https://img.shields.io/github/license/bakayu/blinkzero?style=flat&color=000000)
+![CI Status](https://github.com/bakayu/blinkzero/actions/workflows/CI.yml/badge.svg) ![Vercel Deployment](https://img.shields.io/github/deployments/bakayu/blinkzero/Production?logo=vercel&style=flat&color=000000&label=Vercel) ![Rust Version](https://img.shields.io/badge/rust-1.75%2B-000000.svg?style=flat&logo=rust) ![Powered by Solana](https://img.shields.io/badge/powered_by-solana-000000.svg?style=flat&logo=solana) ![Release Version](https://img.shields.io/github/v/release/bakayu/blinkzero?style=flat&color=000000) ![License](https://img.shields.io/github/license/bakayu/blinkzero?style=flat&color=000000)
 
 ![image](./frontend/favicon.png)
 
