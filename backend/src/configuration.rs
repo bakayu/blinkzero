@@ -2,7 +2,7 @@ use config::ConfigError;
 use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 use serde_aux::field_attributes::deserialize_number_from_string;
-use sqlx::postgres::PgConnectOptions;
+use sqlx::postgres::{PgConnectOptions, PgSslMode};
 
 #[derive(Deserialize, Clone)]
 pub struct Settings {
@@ -18,6 +18,7 @@ pub struct DatabaseSettings {
     pub port: u16,
     pub host: String,
     pub database_name: String,
+    pub require_ssl: bool,
 }
 
 #[derive(Deserialize, Clone)]
@@ -29,21 +30,32 @@ pub struct ApplicationSettings {
 
 impl DatabaseSettings {
     pub fn connect_options(&self) -> PgConnectOptions {
+        let ssl_mode = if self.require_ssl {
+            PgSslMode::Require
+        } else {
+            PgSslMode::Prefer
+        };
         PgConnectOptions::new()
             .host(&self.host)
             .username(&self.username)
             .password(self.password.expose_secret())
             .port(self.port)
             .database(&self.database_name)
+            .ssl_mode(ssl_mode)
     }
 
     pub fn without_db(&self) -> PgConnectOptions {
-        use secrecy::ExposeSecret;
+        let ssl_mode = if self.require_ssl {
+            PgSslMode::Require
+        } else {
+            PgSslMode::Prefer
+        };
         PgConnectOptions::new()
             .host(&self.host)
             .username(&self.username)
             .password(self.password.expose_secret())
             .port(self.port)
+            .ssl_mode(ssl_mode)
     }
 }
 
