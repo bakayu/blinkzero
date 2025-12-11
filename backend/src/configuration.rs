@@ -36,6 +36,15 @@ impl DatabaseSettings {
             .port(self.port)
             .database(&self.database_name)
     }
+
+    pub fn without_db(&self) -> PgConnectOptions {
+        use secrecy::ExposeSecret;
+        PgConnectOptions::new()
+            .host(&self.host)
+            .username(&self.username)
+            .password(self.password.expose_secret())
+            .port(self.port)
+    }
 }
 
 pub fn get_configuration() -> Result<Settings, ConfigError> {

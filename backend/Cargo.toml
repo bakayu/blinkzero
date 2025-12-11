@@ -27,6 +27,7 @@ base64 = "0.22.1"
 bincode = "1.3"
 tower_governor = "0.8.0"
 governor = "0.10.2"
+once_cell = "1.21.3"
 
 [dependencies.sqlx]
 version = "0.8"
@@ -38,6 +39,7 @@ features = [
     "uuid",
     "chrono",
     "migrate",
+    "json",
 ]
 
 [dependencies.reqwest]

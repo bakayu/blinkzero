@@ -491,6 +491,7 @@ dependencies = [
  "config",
  "dotenvy",
  "governor 0.10.2",
+ "once_cell",
  "reqwest 0.12.25",
  "secrecy",
  "serde",

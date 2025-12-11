@@ -46,7 +46,7 @@ pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
     PgPoolOptions::new().connect_lazy_with(configuration.connect_options())
 }
 
-async fn run(
+pub async fn run(
     listener: TcpListener,
     db_pool: PgPool,
 ) -> Result<JoinHandle<Result<(), std::io::Error>>, std::io::Error> {
