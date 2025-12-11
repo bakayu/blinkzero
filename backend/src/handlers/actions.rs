@@ -1,7 +1,8 @@
 use axum::{
     Json,
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
+    response::IntoResponse,
 };
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use solana_client::nonblocking::rpc_client::RpcClient;
@@ -21,10 +22,11 @@ use uuid::Uuid;
 
 use crate::models::{
     ActionLinks, ActionMetadata, ActionParameter, ActionPostRequest, ActionPostResponse,
-    ActionQueryParams, Blink, BlinkType, LinkedAction,
+    ActionQueryParams, ActionRule, ActionsJson, Blink, BlinkType, LinkedAction,
 };
 
 const MEMO_PROGRAM_ID: &str = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
+const SOLANA_DEVNET_CHAIN_ID: &str = "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1";
 
 #[tracing::instrument(
     name = "Fetching action metadata",
@@ -34,7 +36,7 @@ const MEMO_PROGRAM_ID: &str = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
 pub async fn get_action_metadata(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ActionMetadata>, (StatusCode, String)> {
+) -> Result<impl IntoResponse, (StatusCode, String)> {
     let backend_url =
         std::env::var("BACKEND_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
 
@@ -88,14 +90,20 @@ pub async fn get_action_metadata(
         }
     };
 
-    Ok(Json(ActionMetadata {
+    let response_body = ActionMetadata {
         icon: blink.icon_url,
         label: blink.label.clone(),
         title: blink.title,
         description: blink.description,
         links: Some(ActionLinks { actions }),
         disabled: None,
-    }))
+    };
+
+    let mut headers = HeaderMap::new();
+    headers.insert("x-blockchain-ids", SOLANA_DEVNET_CHAIN_ID.parse().unwrap());
+    headers.insert("x-action-version", "2.1.3".parse().unwrap());
+
+    Ok((headers, Json(response_body)))
 }
 
 #[tracing::instrument(
@@ -166,6 +174,24 @@ pub async fn post_action_transaction(
         transaction: BASE64.encode(&serialized),
         message: Some(message),
     }))
+}
+
+pub async fn get_action_json() -> impl IntoResponse {
+    let backend_url =
+        std::env::var("BACKEND_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
+
+    let mut headers = HeaderMap::new();
+    headers.insert("x-blockchain-ids", SOLANA_DEVNET_CHAIN_ID.parse().unwrap());
+
+    (
+        headers,
+        Json(ActionsJson {
+            rules: vec![ActionRule {
+                path_pattern: "/api/actions/*".to_string(),
+                api_path: format!("{}/api/actions/*", backend_url),
+            }],
+        }),
+    )
 }
 
 fn get_rpc_client() -> Result<RpcClient, (StatusCode, String)> {
